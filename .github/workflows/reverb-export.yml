@@ -1,40 +1,16 @@
-name: Export Reverb Listings & Upload to FTP
-
-on:
-  workflow_dispatch:      # manual run
-  schedule:
-    - cron: "0 3 * * *"   # daily at 03:00 UTC (optional)
-
-jobs:
-  export-and-upload:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          extensions: curl, mbstring, zip
-          coverage: none
-
-      - name: Install Composer dependencies
-        run: composer install --no-interaction --prefer-dist
-
-      - name: Run Reverb export
-        env:
-          REVERB_TOKEN: ${{ secrets.REVERB_TOKEN }}
-        run: php export_reverb_listings.php
-
-      - name: Upload XLSX to FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USER }}
-          password: ${{ secrets.FTP_PASS }}
-          local-dir: ./
-          server-dir: /Bobby/Reverb/
-          include: |
-            ReverbCityMusic.xlsx
+- name: Upload XLSX to FTP
+  uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+  with:
+    server: ${{ secrets.FTP_HOST }}
+    username: ${{ secrets.FTP_USER }}
+    password: ${{ secrets.FTP_PASS }}
+    protocol: ftp
+    port: 21
+    passive: true
+    timeout: 60000
+    local-dir: ./
+    server-dir: /Bobby/Reverb/
+    include: |
+      ReverbCityMusic.xlsx
+    exclude: |
+      **

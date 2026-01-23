@@ -3,7 +3,7 @@ name: Export Reverb Listings & Upload to FTP
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 3 * * *"   # daily at 03:00 UTC
+    - cron: "0 3 * * *"
 
 jobs:
   export-and-upload:
@@ -28,6 +28,12 @@ jobs:
           REVERB_TOKEN: ${{ secrets.REVERB_TOKEN }}
         run: php export_reverb_listings.php
 
+      # 👇 Create a clean upload directory
+      - name: Prepare FTP upload directory
+        run: |
+          mkdir -p ftp_upload
+          mv ReverbCityMusic.xlsx ftp_upload/
+
       - name: Upload XLSX to FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -39,8 +45,7 @@ jobs:
           port: 21
           timeout: 60000
 
-          # 👇 Upload ONLY this file
-          local-dir: ./ReverbCityMusic.xlsx
+          local-dir: ftp_upload/
           server-dir: /Bobby/Reverb/
 
           dangerous-clean-slate: false

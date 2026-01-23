@@ -26,7 +26,7 @@ jobs:
       - name: Run Reverb export
         env:
           REVERB_TOKEN: ${{ secrets.REVERB_TOKEN }}
-        run: php export_reverb_listings.php
+        run: php get_products.php
 
       - name: Upload XLSX to FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5

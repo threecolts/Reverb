@@ -1,9 +1,9 @@
 name: Export Reverb Listings & Upload to FTP
 
 on:
-  workflow_dispatch:      # manual run
+  workflow_dispatch:
   schedule:
-    - cron: "0 3 * * *"   # daily at 03:00 UTC (optional)
+    - cron: "0 3 * * *"
 
 jobs:
   export-and-upload:
@@ -24,8 +24,6 @@ jobs:
         run: composer install --no-interaction --prefer-dist
 
       - name: Run Reverb export
-        env:
-          REVERB_TOKEN: ${{ secrets.REVERB_TOKEN }}
         run: php export_reverb_listings.php
 
       - name: Upload XLSX to FTP

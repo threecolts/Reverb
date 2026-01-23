@@ -1,9 +1,0 @@
-{
-  "name": "reverb/export",
-  "description": "Export Reverb listings to XLSX",
-  "type": "project",
-  "require": {
-    "php": ">=8.0",
-    "phpoffice/phpspreadsheet": "^1.29"
-  }
-}

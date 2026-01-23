@@ -18,21 +18,9 @@ jobs:
           extensions: curl, mbstring, zip
           tools: composer
 
-      - name: Create composer.json
+      - name: Install PhpSpreadsheet (creates composer.json)
         run: |
-          cat << 'EOF' > composer.json
-          {
-            "name": "reverb/export",
-            "type": "project",
-            "require": {
-              "php": ">=8.0",
-              "phpoffice/phpspreadsheet": "^1.29"
-            }
-          }
-          EOF
-
-      - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist
+          composer require phpoffice/phpspreadsheet:^1.29 --no-interaction
 
       - name: Run Reverb export
         run: php get_products.php

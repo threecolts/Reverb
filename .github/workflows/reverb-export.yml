@@ -18,34 +18,32 @@ jobs:
           extensions: curl, mbstring, zip
           coverage: none
 
-      - name: Find composer.json
-        id: find-composer
+      - name: Create composer.json (CI-safe)
         run: |
-          COMPOSER_DIR=$(find "$GITHUB_WORKSPACE" -name composer.json -type f -maxdepth 3 | head -n 1 | xargs dirname)
-          if [ -z "$COMPOSER_DIR" ]; then
-            echo "❌ composer.json not found"
-            exit 1
-          fi
-          echo "Found composer.json in: $COMPOSER_DIR"
-          echo "composer_dir=$COMPOSER_DIR" >> $GITHUB_OUTPUT
+          cat << 'EOF' > composer.json
+          {
+            "name": "reverb/export",
+            "type": "project",
+            "require": {
+              "php": ">=8.0",
+              "phpoffice/phpspreadsheet": "^1.29"
+            }
+          }
+          EOF
 
       - name: Install Composer dependencies
-        run: |
-          cd "${{ steps.find-composer.outputs.composer_dir }}"
-          composer install --no-interaction --prefer-dist
+        run: composer install --no-interaction --prefer-dist
 
       - name: Run Reverb export
-        run: |
-          cd "${{ steps.find-composer.outputs.composer_dir }}"
-          php get_products.php
+        run: php get_products.php
 
       - name: Upload XLSX to FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USER }}
-          password: ${{ secrets.FTP_PASS }}
-          local-dir: ${{ steps.find-composer.outputs.composer_dir }}/
+          server: tooltest.pentagonhosting.co.uk
+          username: tooltest_pentagon
+          password: Ve11vwoG5N1MlmBY
+          local-dir: ./
           server-dir: /Bobby/Reverb/
           include: |
             ReverbCityMusic.xlsx

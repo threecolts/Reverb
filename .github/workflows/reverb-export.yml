@@ -11,12 +11,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Debug – confirm files
-        run: |
-          echo "Workspace is:"
-          echo "$GITHUB_WORKSPACE"
-          ls -la "$GITHUB_WORKSPACE"
-
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -24,14 +18,25 @@ jobs:
           extensions: curl, mbstring, zip
           coverage: none
 
-      - name: Install Composer dependencies (FORCED)
+      - name: Find composer.json
+        id: find-composer
         run: |
-          cd "$GITHUB_WORKSPACE"
+          COMPOSER_DIR=$(find "$GITHUB_WORKSPACE" -name composer.json -type f -maxdepth 3 | head -n 1 | xargs dirname)
+          if [ -z "$COMPOSER_DIR" ]; then
+            echo "❌ composer.json not found"
+            exit 1
+          fi
+          echo "Found composer.json in: $COMPOSER_DIR"
+          echo "composer_dir=$COMPOSER_DIR" >> $GITHUB_OUTPUT
+
+      - name: Install Composer dependencies
+        run: |
+          cd "${{ steps.find-composer.outputs.composer_dir }}"
           composer install --no-interaction --prefer-dist
 
       - name: Run Reverb export
         run: |
-          cd "$GITHUB_WORKSPACE"
+          cd "${{ steps.find-composer.outputs.composer_dir }}"
           php get_products.php
 
       - name: Upload XLSX to FTP
@@ -40,7 +45,7 @@ jobs:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASS }}
-          local-dir: ./
+          local-dir: ${{ steps.find-composer.outputs.composer_dir }}/
           server-dir: /Bobby/Reverb/
           include: |
             ReverbCityMusic.xlsx

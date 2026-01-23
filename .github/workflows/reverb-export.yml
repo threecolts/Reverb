@@ -2,27 +2,20 @@ name: Export Reverb Listings & Upload to FTP
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 3 * * *"
 
 jobs:
   export-and-upload:
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: ${{ github.workspace }}
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Debug – show files
+      - name: Debug – confirm files
         run: |
-          echo "PWD:"
-          pwd
-          echo "Files:"
-          ls -la
+          echo "Workspace is:"
+          echo "$GITHUB_WORKSPACE"
+          ls -la "$GITHUB_WORKSPACE"
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -31,11 +24,15 @@ jobs:
           extensions: curl, mbstring, zip
           coverage: none
 
-      - name: Install Composer dependencies
-        run: composer install --no-interaction --prefer-dist
+      - name: Install Composer dependencies (FORCED)
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          composer install --no-interaction --prefer-dist
 
       - name: Run Reverb export
-        run: php get_products.php
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          php get_products.php
 
       - name: Upload XLSX to FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5

@@ -11,22 +11,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Show workspace (debug – keep for now)
-        run: |
-          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
-          pwd
-          ls -la
-
-      - name: Setup PHP
+      - name: Setup PHP + Composer
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
           extensions: curl, mbstring, zip
-          coverage: none
+          tools: composer
 
-      - name: Create composer.json IN WORKSPACE
+      - name: Create composer.json
         run: |
-          cd "$GITHUB_WORKSPACE"
           cat << 'EOF' > composer.json
           {
             "name": "reverb/export",
@@ -37,17 +30,12 @@ jobs:
             }
           }
           EOF
-          ls -la
 
-      - name: Install Composer dependencies (SAME DIR)
-        run: |
-          cd "$GITHUB_WORKSPACE"
-          composer install --no-interaction --prefer-dist
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
 
       - name: Run Reverb export
-        run: |
-          cd "$GITHUB_WORKSPACE"
-          php get_products.php
+        run: php get_products.php
 
       - name: Upload XLSX to FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5

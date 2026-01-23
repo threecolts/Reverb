@@ -5,17 +5,21 @@ require __DIR__ . '/vendor/autoload.php';
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
 /**
  * CONFIG
  */
-$startUrl  = 'https://api.reverb.com/api/my/listings?state=all';
+$startUrl   = 'https://api.reverb.com/api/my/listings?state=all';
 $outputFile = __DIR__ . '/ReverbCityMusic.xlsx';
 
 /**
- * 🔑 HARD-CODED TOKEN (as requested)
+ * 🔑 API TOKEN (from GitHub Actions secret)
  */
-$token = 'a2dba2cc7cbfdff03e241b2d0d8fbf733877aa2e5cda63727d2de9b6691e5d2e';
+$token = getenv('REVERB_TOKEN');
+if (!$token) {
+    throw new RuntimeException('Missing REVERB_TOKEN environment variable');
+}
 
 /**
  * HTTP GET helper
@@ -72,7 +76,7 @@ function getNested(array $arr, array $path, $default = '')
 }
 
 /**
- * Create XLSX
+ * Spreadsheet setup
  */
 $headers = [
     'SKU',
@@ -98,50 +102,51 @@ $headers = [
 
 $spreadsheet = new Spreadsheet();
 $sheet = $spreadsheet->getActiveSheet();
+$sheet->setTitle('Reverb Listings');
 
-// Header row
+/**
+ * Header row
+ */
 foreach ($headers as $i => $header) {
-    $sheet->setCellValueByColumnAndRow($i + 1, 1, $header);
+    $cell = Coordinate::stringFromColumnIndex($i + 1) . '1';
+    $sheet->setCellValue($cell, $header);
 }
+
 $sheet->freezePane('A2');
 $sheet->getStyle('1:1')->getFont()->setBold(true);
 
 $rowNum = 2;
-$url = $startUrl;
+$url    = $startUrl;
 
+/**
+ * Fetch listings
+ */
 while ($url) {
     $data = httpGetJson($url, $token);
 
     foreach ($data['listings'] as $listing) {
 
-        // Categories
         $categories = [];
         foreach ($listing['categories'] ?? [] as $cat) {
             $categories[] = $cat['full_name'] ?? '';
         }
-
-        // Shipping cost (first rate)
-        $shippingCost = getNested($listing, ['shipping','rates',0,'rate','amount'], '');
-
-        // Main image (first photo)
-        $mainImage = getNested($listing, ['photos',0,'_links','full','href'], '');
 
         $row = [
             $listing['sku'] ?? '',
             $listing['id'] ?? '',
             $listing['title'] ?? '',
             $listing['description'] ?? '',
-            getNested($listing, ['price','amount'], ''),
+            getNested($listing, ['price', 'amount'], ''),
             $listing['inventory'] ?? '',
-            $listing['offers_enabled'] ? 'true' : 'false',
-            getNested($listing, ['state','description'], ''),
-            getNested($listing, ['condition','display_name'], ''),
-            getNested($listing, ['condition','description'], ''),
+            !empty($listing['offers_enabled']) ? 'true' : 'false',
+            getNested($listing, ['state', 'description'], ''),
+            getNested($listing, ['condition', 'display_name'], ''),
+            getNested($listing, ['condition', 'description'], ''),
             $listing['listing_currency'] ?? '',
             implode(' | ', $categories),
             $listing['shipping_profile_id'] ?? '',
-            $shippingCost,
-            $mainImage,
+            getNested($listing, ['shipping', 'rates', 0, 'rate', 'amount'], ''),
+            getNested($listing, ['photos', 0, '_links', 'full', 'href'], ''),
             $listing['make'] ?? '',
             $listing['model'] ?? '',
             $listing['finish'] ?? '',
@@ -149,19 +154,31 @@ while ($url) {
         ];
 
         foreach ($row as $col => $value) {
-            $sheet->setCellValueByColumnAndRow($col + 1, $rowNum, $value);
+            $cell = Coordinate::stringFromColumnIndex($col + 1) . $rowNum;
+            $sheet->setCellValue($cell, $value);
         }
 
         $rowNum++;
     }
 
-    // Pagination
     $url = $data['_links']['next']['href'] ?? null;
 
-    // Small delay to be API-friendly
+    // Be nice to the API
     usleep(150000);
 }
 
+/**
+ * Auto-size columns
+ */
+foreach (range(1, count($headers)) as $col) {
+    $sheet->getColumnDimension(
+        Coordinate::stringFromColumnIndex($col)
+    )->setAutoSize(true);
+}
+
+/**
+ * Save file
+ */
 $writer = new Xlsx($spreadsheet);
 $writer->save($outputFile);
 

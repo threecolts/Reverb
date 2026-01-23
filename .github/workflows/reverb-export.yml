@@ -13,6 +13,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 🔍 Debug step (you can remove later)
+      - name: Show workspace files
+        run: |
+          pwd
+          ls -la
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -24,7 +30,7 @@ jobs:
         run: composer install --no-interaction --prefer-dist
 
       - name: Run Reverb export
-        run: php export_reverb_listings.php
+        run: php get_products.php
 
       - name: Upload XLSX to FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5

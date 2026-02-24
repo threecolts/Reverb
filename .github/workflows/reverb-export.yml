@@ -3,7 +3,7 @@ name: Export Reverb Listings & Upload to FTP
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "*/20 7 * * *"
 
 jobs:
   export-and-upload:

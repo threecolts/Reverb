@@ -76,6 +76,18 @@ function getNested(array $arr, array $path, $default = '')
 }
 
 /**
+ * Remove Reverb image transformation parameters
+ */
+function trimReverbImageUrl(string $url): string
+{
+    if (!$url) {
+        return '';
+    }
+
+    return preg_replace('#/quality=.*?/#', '/', $url);
+}
+
+/**
  * Spreadsheet setup
  */
 $headers = [
@@ -131,6 +143,10 @@ while ($url) {
             $categories[] = $cat['full_name'] ?? '';
         }
 
+        $imageUrl = trimReverbImageUrl(
+            getNested($listing, ['photos', 0, '_links', 'full', 'href'], '')
+        );
+
         $row = [
             $listing['sku'] ?? '',
             $listing['id'] ?? '',
@@ -146,7 +162,7 @@ while ($url) {
             implode(' | ', $categories),
             $listing['shipping_profile_id'] ?? '',
             getNested($listing, ['shipping', 'rates', 0, 'rate', 'amount'], ''),
-            getNested($listing, ['photos', 0, '_links', 'full', 'href'], ''),
+            $imageUrl,
             $listing['make'] ?? '',
             $listing['model'] ?? '',
             $listing['finish'] ?? '',

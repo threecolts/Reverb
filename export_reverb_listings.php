@@ -15,18 +15,17 @@ $outputFile = __DIR__ . '/ReverbCityMusic.xlsx';
 $limit      = 100000;
 
 /**
- * API TOKEN
+ * Load from environment (GitHub Actions)
  */
-$token = 'a2dba2cc7cbfdff03e241b2d0d8fbf733877aa2e5cda63727d2de9b6691e5d2e';
+$token   = getenv('REVERB_TOKEN');
 
-/**
- * FTP CONFIG
- */
-$ftpHost = 'tooltest.pentagonhosting.co.uk';
-$ftpUser = 'tooltest_pentagon';
-$ftpPass = 'Ve11vwoG5N1MlmBY';
+$ftpHost = getenv('FTP_HOST');
+$ftpUser = getenv('FTP_USER');
+$ftpPass = getenv('FTP_PASS');
 $ftpPath = '/Bobby/Reverb/ReverbCityMusic.xlsx';
-
+if (!$token || !$ftpHost || !$ftpUser || !$ftpPass) {
+    throw new RuntimeException('Missing environment variables');
+}
 /**
  * HTTP GET with retry
  */

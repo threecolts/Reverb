@@ -1,0 +1,30 @@
+name: Export Reverb Listings
+
+on:
+  workflow_dispatch:   # manual run
+  schedule:
+    - cron: "0 3 * * *"   # runs daily at 03:00 UTC (optional)
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.2
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run export script
+        env:
+          REVERB_TOKEN: ${{ secrets.REVERB_TOKEN }}
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASS: ${{ secrets.FTP_PASS }}
+        run: php export_reverb_listings.php

@@ -121,6 +121,7 @@ function mapCondition(string $condition): int
         'fair' => 3000,
         'poor' => 3000,
         'non functioning' => 7000,
+        'mint (with inventory)' => 3000,
     ];
 
     return $map[strtolower(trim($condition))] ?? 1000;
